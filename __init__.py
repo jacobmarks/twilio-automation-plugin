@@ -5,7 +5,6 @@
 |
 """
 
-from datetime import datetime
 import os
 
 import fiftyone as fo
@@ -53,9 +52,10 @@ def get_local_basepath(dataset):
 def create_sample(media, message_body, message_sid, date_sent, local_basepath):
     """Create a FiftyOne sample from a Twilio message."""
     ext = get_file_extension(media.content_type)
-    uri = media.uri
     local_filepath = os.path.join(local_basepath, media.sid + f".{ext}")
-    media_url = "https://api.twilio.com" + uri[:-5]  # Strip off the '.json'
+    media_url = (
+        "https://api.twilio.com" + media.uri[:-5]
+    )  # Strip off the '.json'
     download_url = get_download_url(media_url)
 
     ## Download the file
