@@ -1,49 +1,67 @@
-## AI Art Gallery Plugin
+## Twilio Automation Plugin
 
-![ai_art_gallery_txt2img](https://github.com/jacobmarks/ai-art-gallery/assets/12500356/23872da5-b722-4c34-b49f-b72fcfc7cdb7)
+This plugin is a Python plugin that allows you to automate data ingestion with [twilio](https://www.twilio.com/en-us). Take pictures with your phone and send them to a Twilio number. The plugin will automatically download the images and add them to your dataset.
 
-This plugin is a Python plugin that allows you to generate images from text
-prompts and add them directly into your dataset.
+✨☕💻✨ This plugin is a direct byproduct of the hackathon at the [Twilio SIGNAL Creator Summit 2023](https://signal.twilio.com/2023/creator-summit).
 
-It demonstrates how to do the following:
+This plugin demonstrates how to do the following:
 
-- use Python to create an operator with different options depending on user
-  choices
-- use `componentProps` to customize the UI
-- download images from URL and add them to the dataset
-
-:warning: This plugin is only verified to work for local datasets. It may not
-work for remote datasets.
-
-### Supported Models
-
-This version of the plugin supports the following models:
-
-- [DALL-E2](https://openai.com/dall-e-2)
-- [Stable Diffusion](https://replicate.com/stability-ai/stable-diffusion)
-- [VQGAN-CLIP](https://replicate.com/mehdidc/feed_forward_vqgan_clip)
-
-It is straightforward to add support for other models!
+- use Python to create an operator with different options depending on user choices
+- add a custom operator icon via the operators `icon` property
+- download images from URL — with authentication — and add them to the dataset
 
 ## Installation
 
+### Twilio Setup
+
+Before installing this plugin, you must set up your Twilio account:
+
+1. [Create a Twilio account](https://www.twilio.com/try-twilio). Twilio offers a free trial, so you can try this out without paying anything.
+2. Buy (with the free trial credits) a toll-free phone number that can receive MMS messages. You can do this from the [Twilio Console](https://www.twilio.com/console/phone-numbers/search).
+3. Go to the [Twilio Console](https://console.twilio.com/) and copy the "Account SID", "Auth Token", and "My Twilio phone number" values. Add these values as environment variables in your shell rc (`.bashrc`, `.zshrc`, etc.)):
+
 ```shell
-fiftyone plugins download https://github.com/jacobmarks/ai-art-gallery
+export TWILIO_ACCOUNT_SID=<your account SID>
+export TWILIO_AUTH_TOKEN=<your auth token>
+export TWILIO_PHONE_NUMBER=<your Twilio phone number>
 ```
 
-If you want to use Replicate models (Stable Diffusion and VQGAN-CLIP), you will
-need to `pip install replicate` and set the environment variable
-`REPLICATE_API_TOKEN` with your API token.
+💡 You will need to restart your shell for these environment variables to take effect.
 
-If you want to use DALL-E2, you will need to `pip install openai` and set the
-environment variable `OPENAI_API_KEY` with your API key.
+4. Install the [twilio Python helper library](https://github.com/twilio/twilio-python/tree/main).
 
-Refer to the [main README](https://github.com/voxel51/fiftyone-plugins) for
-more information about managing downloaded plugins and developing plugins
-locally.
+```shell
+pip install twilio
+```
+
+### Plugin Installation
+
+To install the plugin, run the following command:
+
+```shell
+fiftyone plugins download https://github.com/jacobmarks/twilio-automation-plugin
+```
 
 ## Operators
 
-### `txt2img`
+### `add_twilio_images`
 
-- Generates an image from a text prompt and adds it to the dataset
+Add images received by your Twilio number to the dataset. This operator only adds images that have not already been added to the dataset.
+
+When you run the operator, it will download the images, assign them a filepath, and add them to the dataset with metadata.
+
+#### Filtering by message body
+
+When executing the operator, you can filter the images that are added to the dataset by the message body.
+
+## Notes
+
+### Local datasets only
+
+This plugin is only meant for local datasets. If
+you are working with large-scale, remotely hosted datasets, you likely need a
+more robust solution 👉 [FiftyOne Teams](https://voxel51.com/fiftyone-teams/)
+
+### Cost
+
+This plugin uses Twilio's MMS service, which costs $0.02 message received. You can send up to 10 images per message, so the cost is $0.002 per image. If you are using the free trial, you will have $13 in credits left after buying a phone number, which is enough for 6,500 images.
