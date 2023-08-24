@@ -12,6 +12,7 @@ import fiftyone.core.utils as fou
 from fiftyone.core.utils import add_sys_path
 import fiftyone.operators as foo
 from fiftyone.operators import types
+from fiftyone import ViewField as F
 
 twilio = fou.lazy_import("twilio")
 
@@ -71,7 +72,13 @@ def create_sample(media, message_body, message_sid, date_sent, local_basepath):
     return sample
 
 
-def add_twilio_samples(dataset, start_date=None, end_date=None):
+def _has_sid(dataset, sid):
+    if dataset.exists("message_sid").count() > 0:
+        return dataset.match(F("message_sid") == sid).count() > 0
+    return False
+
+
+def add_twilio_samples(dataset, filter_text=None):
     """Add Twilio samples to a FiftyOne dataset."""
     local_basepath = get_local_basepath(dataset)
 
@@ -83,6 +90,10 @@ def add_twilio_samples(dataset, start_date=None, end_date=None):
         if int(message.num_media) > 0:
             body = message.body
             sid = message.sid
+            if _has_sid(dataset, sid):
+                continue
+            if filter_text is not None and filter_text not in body.lower():
+                continue
             date_sent = message.date_sent
 
             for media in message.media.list():
@@ -116,30 +127,26 @@ class DownloadTwilioImages(foo.Operator):
 
         inputs.message("message", label="Add Twilio images to your dataset!")
 
-        # radio_choices = types.RadioGroup()
-        # radio_choices.add_choice("all", label="All")
-        # radio_choices.add_choice("date", label="Date Range")
-        # inputs.enum(
-        #     "date_choices",
-        #     radio_choices.values(),
-        #     default=radio_choices.choices[0].value,
-        #     label="Date Range",
-        #     view=radio_choices,
-        # )
+        inputs.bool(
+            "filter",
+            default=False,
+            label="Filter by message content",
+        )
 
-        # if ctx.params.get("date_choices", False) == "date":
-        #     inputs.datetime(
-        #         "start_date",
-        #         label="Start Date",
-        #         default=datetime.now(),
-        #         required=True,
-        #     )
+        if ctx.params.get("filter", False):
+            inputs.str(
+                "filter_text",
+                default="",
+                label="Filter text",
+                description="Only download images from messages that contain the given text:",
+                required=True,
+            )
 
         return types.Property(inputs)
 
     def execute(self, ctx):
         dataset = ctx.dataset
-        add_twilio_samples(dataset)
+        add_twilio_samples(dataset, filter_text=ctx.params.get("filter_text"))
 
         if dataset.get_dynamic_field_schema() is not None:
             dataset.add_dynamic_sample_fields()
