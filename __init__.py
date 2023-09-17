@@ -109,12 +109,13 @@ def add_twilio_samples(dataset, filter_text=None):
 class DownloadTwilioImages(foo.Operator):
     @property
     def config(self):
-        return foo.OperatorConfig(
+        _config = foo.OperatorConfig(
             name="add_twilio_images",
             label="Twilio Automation: download images from Twilio",
             dynamic=True,
-            icon="/assets/twilio-icon.svg",
         )
+        _config.icon = "/assets/twilio-icon.svg"
+        return _config
 
     def resolve_input(self, ctx):
         inputs = types.Object()
