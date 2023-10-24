@@ -1,7 +1,7 @@
 fiftyone:
-  version: ">=0.21.0"
+  version: ">=0.22.0"
 name: "@jacobmarks/twilio_automation"
-version: "1.0.0"
+version: "1.0.1"
 description: "Add images right into your FiftyOne dataset using Twilio!"
 url: "https://github.com/jacobmarks/twilio-automation-plugin/blob/main/README.md"
 operators:

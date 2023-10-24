@@ -41,15 +41,6 @@ def get_file_extension(media_type):
         raise ValueError(f"Unknown media type: {media_type}")
 
 
-def get_local_basepath(dataset):
-    if dataset.count() == 0:
-        base_dir = "/tmp"
-    else:
-        path = dataset.first().filepath
-        base_dir = "/".join(path.split("/")[:-1])
-    return base_dir
-
-
 def create_sample(media, message_body, message_sid, date_sent, local_basepath):
     """Create a FiftyOne sample from a Twilio message."""
     ext = get_file_extension(media.content_type)
@@ -78,9 +69,37 @@ def _has_sid(dataset, sid):
     return False
 
 
-def add_twilio_samples(dataset, filter_text=None):
+def _resolve_download_dir(ctx, inputs):
+    if len(ctx.dataset) == 0:
+        file_explorer = types.FileExplorerView(
+            choose_dir=True,
+            button_label="Choose a directory...",
+        )
+        inputs.file(
+            "download_dir",
+            required=True,
+            description="Choose a location to store downloaded images",
+            view=file_explorer,
+        )
+    else:
+        base_dir = os.path.dirname(ctx.dataset.first().filepath).split("/")[
+            :-1
+        ]
+        ctx.params["download_dir"] = "/".join(base_dir)
+
+
+def get_local_basepath(ctx):
+    download_dir = ctx.params.get("download_dir", {})
+    if type(download_dir) == dict:
+        download_dir = download_dir.get("absolute_path", "/tmp")
+    else:
+        download_dir = "/tmp"
+    return download_dir
+
+
+def add_twilio_samples(dataset, filter_text=None, ctx=None):
     """Add Twilio samples to a FiftyOne dataset."""
-    local_basepath = get_local_basepath(dataset)
+    local_basepath = get_local_basepath(ctx)
 
     messages = get_twilio_messages()
 
@@ -119,14 +138,11 @@ class DownloadTwilioImages(foo.Operator):
 
     def resolve_input(self, ctx):
         inputs = types.Object()
-        if len(ctx.dataset) == 0:
-            warning = types.Warning(
-                label="Warning",
-                description="The dataset is empty, so downloaded files will be stored in '/tmp.'",
-            )
-            inputs.view("warning", warning)
-
-        inputs.message("message", label="Add Twilio images to your dataset!")
+        form_view = types.View(
+            label="Twilio ingestion",
+            description="Add Twilio images to your dataset!",
+        )
+        _resolve_download_dir(ctx, inputs)
 
         inputs.bool(
             "filter",
@@ -143,11 +159,13 @@ class DownloadTwilioImages(foo.Operator):
                 required=True,
             )
 
-        return types.Property(inputs)
+        return types.Property(inputs, view=form_view)
 
     def execute(self, ctx):
         dataset = ctx.dataset
-        add_twilio_samples(dataset, filter_text=ctx.params.get("filter_text"))
+        add_twilio_samples(
+            dataset, filter_text=ctx.params.get("filter_text"), ctx=ctx
+        )
 
         if dataset.get_dynamic_field_schema() is not None:
             dataset.add_dynamic_sample_fields()
