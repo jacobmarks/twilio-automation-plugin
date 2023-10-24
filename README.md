@@ -1,7 +1,6 @@
 ## Twilio Automation Plugin
 
-![twilio](https://github.com/jacobmarks/twilio-automation-plugin/assets/12500356/8d2a4813-ae89-4377-8900-f5a25c7ecc69)
-
+![twilio](https://github.com/jacobmarks/twilio-automation-plugin/assets/12500356/5c25c312-9890-4bd3-b194-ca33ee0819fd)
 
 This plugin is a Python plugin that allows you to automate data ingestion with [twilio](https://www.twilio.com/en-us). Take pictures with your phone and send them to a Twilio number. The plugin will automatically download the images and add them to your dataset.
 
